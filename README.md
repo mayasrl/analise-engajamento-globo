@@ -2,7 +2,6 @@
 # 📈 Análise de Engajamento de Mídias Globo
 
 Um **pipeline em Python puro** para simular a coleta, limpeza, estruturação e análise de dados de engajamento do público com conteúdos da Globo.  
-A Fase 1 acompanha o módulo **DS-PY-19: Lógica de Programação em Python** e servirá de base para as fases seguintes.
 
 ---
 
