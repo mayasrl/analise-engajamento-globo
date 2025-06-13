@@ -1,48 +1,47 @@
-
 # 📈 Análise de Engajamento de Mídias Globo
 
-Um **pipeline em Python puro** para simular a coleta, limpeza, estruturação e análise de dados de engajamento do público com conteúdos da Globo.  
+Um **pipeline em Python puro** para simular a coleta, limpeza, estruturação e análise de dados de engajamento do público com conteúdos da Globo.
 
 ---
 
 ## 🧐 Visão Geral
 
-- **Python 3.6+**: apenas módulos nativos (`csv`, `collections.defaultdict`).  
-- **Dados**: `interações_globo.csv` com interações simuladas de views, likes, shares e comments.  
-- **Arquitetura**: funções independentes para cada etapa do pipeline.  
-- **Robustez**: `try/except` em todas as conversões de tipo.  
+- **Python 3.6+**: apenas módulos nativos (`csv`, `collections.defaultdict`).
+- **Dados**: `interações_globo.csv` com interações simuladas de views, likes, shares e comments.
+- **Arquitetura**: funções independentes para cada etapa do pipeline.
+- **Robustez**: `try/except` em todas as conversões de tipo.
 - **Saída**: relatório formatado, com contagens padronizadas e comentários numerados.
 
 ---
 
 ## 📁 Estrutura do Projeto
 
-- **`interações_globo.csv`** — Base de dados simulada (CSV).  
-- **`analise_engajamento_globo.py`** — Script principal com todo o pipeline.  
+- **`interações_globo.csv`** — Base de dados simulada (CSV).
+- **`analise_engajamento_globo.py`** — Script principal com todo o pipeline.
 - **`README.md`** — Documentação do projeto.
 
 ---
 
 ## 🚀 Funcionalidades
 
-1. **Carregar CSV**  
+1. **Carregar CSV**
    Valida existência e não-vazio do arquivo, retorna lista de listas.
 
-2. **Converter para Dicionários**  
+2. **Converter para Dicionários**
    Cada linha vira um `dict[cabeçalho → valor]`.
 
-3. **Limpeza de Campos**  
-   - IDs (`int` ou `None`)  
-   - `watch_duration_seconds` (`int` ou `0`)  
-   - Strings `.strip()` + `.title()`  
+3. **Limpeza de Campos**
+   - IDs (`int` ou `None`)
+   - `watch_duration_seconds` (`int` ou `0`)
+   - Strings `.strip()` + `.title()`
 
-4. **Cálculo de Métricas**  
-   - Total de engajamentos (`like`, `share`, `comment`)  
-   - Contagem individual por tipo  
-   - Tempo total e média de visualização  
-   - Comentários listados e numerados  
+4. **Cálculo de Métricas**
+   - Total de engajamentos (`like`, `share`, `comment`)
+   - Contagem individual por tipo
+   - Tempo total e média de visualização
+   - Comentários listados e numerados
 
-5. **Relatório Formatado**  
+5. **Relatório Formatado**
    Prints organizados por conteúdo, com ordem fixa de tipos e emojis para destaque.
 
 ---
@@ -84,4 +83,14 @@ Top 5 por tempo de visualização:
 
 ---
 
+## 👥 Integrantes do Grupo
+
+*   mayasrl
+*   Pierre
+*   Beatriz
+*   Fernando
+
+---
+
 <p align="center"> Desenvolvido durante o curso <strong>Academia Globotech</strong> com 💛 por <strong>@mayasrl</strong> da Ada em parceria com a Globo. </p>
+
