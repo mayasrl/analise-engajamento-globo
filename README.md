@@ -14,14 +14,6 @@ Um **pipeline em Python puro** para simular a coleta, limpeza, estruturação e 
 
 ---
 
-## 📁 Estrutura do Projeto
-
-- **`interações_globo.csv`** — Base de dados simulada (CSV).
-- **`analise_engajamento_globo.py`** — Script principal com todo o pipeline.
-- **`README.md`** — Documentação do projeto.
-
----
-
 ## 🚀 Funcionalidades
 
 1. **Carregar CSV**
