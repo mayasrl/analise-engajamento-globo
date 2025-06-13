@@ -6,7 +6,7 @@ id_conteudo,nome_conteudo,id_usuario,timestamp_interacao,plataforma,tipo_interac
 3,Podcast Papo de Segunda,105,2024-10-21 10:10:00,G1,share,,
 4,Jogo do Brasileirão Série A,106,2024-10-21 16:00:00,Premiere,view_start,7200,
 4,Jogo do Brasileirão Série A,107,2024-10-21 17:30:00,GE Globo,comment,,Que jogaço!
-5,Mais Você,108,2024-10-22 09:30:00,TV Globo,view_start,1200,
+5,Mais Você    ,108,2024-10-22 09:30:00,TV Globo,view_start,1200,
 6,The Voice Brasil,110,2024-10-22 22:30:00,Globoplay,view_start,3000,
 6,The Voice Brasil,111,2024-10-22 22:35:00,Globoplay,like,,
 6,The Voice Brasil,110,2024-10-23 15:00:00,Globoplay,view_start,3200,
