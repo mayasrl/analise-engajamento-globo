@@ -84,5 +84,5 @@ Top 5 por tempo de visualização:
 
 ---
 
-<p align="center"> Desenvolvido durante o curso <strong>Academia Globotech</strong> com 💛 por <strong>@mayasrl</strong> da Ada em parceria com a Globo. </p>
+<p align="center"> Desenvolvido durante o curso <strong>Academia Globotech</strong> da Ada em parceria com a Globo, com 💛 por <strong>@mayasrl e equipe</strong></p> 
 
