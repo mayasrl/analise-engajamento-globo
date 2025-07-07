@@ -34,7 +34,11 @@ class Conteudo:
     @property
     def nome_conteudo(self):
         return self._nome_conteudo
-
+    
+    @property
+    def interacoes(self):
+        return self._interacoes
+    
     def adicionar_interacao(self, interacao):
         self._interacoes.append(interacao)
 

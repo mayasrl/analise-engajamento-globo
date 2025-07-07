@@ -1,264 +1,573 @@
-from entidades.interacao import Interacao
+import csv
+from collections import defaultdict
 from entidades.plataforma import Plataforma
-from entidades.usuario import Usuario
+from estrutura_dados.fila import FilaCSV
+from estrutura_dados.arvore_binaria_busca import AVLTree as BST
 from entidades.conteudo import Conteudo
+from entidades.usuario import Usuario
+from entidades.interacao import Interacao
+from ordenação.ordenacao import quick_sort, insertion_sort, merge_sort
+ # ou merge_sort, ou bubble_sort, ou selection_sort, ou counting_sort, ou bucket_sort, ou shell_sort, ou cocktail_sort, ou gnome_sort
+
+  # ou insertion_sort
 
 class SistemaAnaliseEngajamento:
-    """
-    Classe que representa o sistema de análise de engajamento de conteúdos.
-    Atributos:
-        - VERSAO_ANALISE (str): Versão do sistema de análise.
-        - __plataformas_registradas (dict): Dicionário que armazena as plataformas registradas.
-        - __conteudos_registrados (dict): Dicionário que armazena os conteúdos registrados.
-        - __usuarios_registrados (dict): Dicionário que armazena os usuários registrados.
-        - __proximo_id_plataforma (int): Próximo ID a ser atribuído a uma plataforma.
-    Métodos:
-        - __init__: Inicializa o sistema com dicionários vazios e um ID inicial para plataformas.
-        - cadastrar_plataforma: Cadastra uma nova plataforma ou retorna a existente.
-        - obter_plataforma: Obtém uma plataforma pelo nome.
-        - listar_plataformas: Lista todas as plataformas registradas.
-        - _carregar_interacoes_csv: Carrega interações de um arquivo CSV.
-        - processar_interacoes_do_csv: Processa interações do CSV e registra usuários, conteúdos e interações.
-        - gerar_relatorio_engajamento_conteudos: Gera um relatório de engajamento dos conteúdos.
-        - gerar_relatorio_atividade_usuarios: Gera um relatório de atividade dos usuários.
-        - identificar_top_conteudos: Identifica os top conteúdos com base em uma métrica específica.
-    """
-    VERSAO_ANALISE = "2.0"
-
     def __init__(self):
-        self.__plataformas_registradas = {}
-        self.__conteudos_registrados = {}
-        self.__usuarios_registrados = {}
-        self.__proximo_id_plataforma = 1
+        self._fila_interacoes_brutas = FilaCSV()
+        self._arvore_conteudos = BST()
+        self._arvore_usuarios = BST()
+        self._plataformas_registradas = {}
 
-    def cadastrar_plataforma(self, nome_plataforma):
-        if nome_plataforma in self.__plataformas_registradas:
-            return self.__plataformas_registradas[nome_plataforma]
-        plataforma = Plataforma(nome_plataforma, id_plataforma=self.__proximo_id_plataforma)
-        self.__plataformas_registradas[nome_plataforma] = plataforma
-        self.__proximo_id_plataforma += 1
-        return plataforma
+    def _carregar_interacoes_csv(self, caminho_arquivo: str):
+        with open(caminho_arquivo, newline='', encoding='utf-8') as arquivo:
+            leitor = csv.reader(arquivo)
+            next(leitor)  # Pula cabeçalho
+            for linha in leitor:
+                self._fila_interacoes_brutas.enfileirar(linha)
 
-    def obter_plataforma(self, nome_plataforma):
-        return self.__plataformas_registradas.get(nome_plataforma)
+    def _ordenar(self, lista, metrica=None, key_func=None, algoritmo='auto'):
+        """
+        Ordena uma lista de objetos usando o algoritmo escolhido (quick, insertion, merge ou auto).
 
-    def listar_plataformas(self):
-        return list(self.__plataformas_registradas.values())
-    
-    def _carregar_interacoes_csv(self, caminho_arquivo):
-        try:
-            with open(caminho_arquivo, 'r', encoding='utf-8') as arquivo:
-                linhas = arquivo.readlines()
-                dados_brutos = [linha.strip().split(',') for linha in linhas]
-                return dados_brutos
-        except FileNotFoundError:
-            print(f"Erro: O arquivo '{caminho_arquivo}' não foi encontrado.")
+        Parâmetros:
+        - lista: lista de objetos a serem ordenados.
+        - metrica: nome do atributo ou método a ser usado para ordenação (string).
+        - key_func: função opcional que retorna o valor a ser usado na ordenação.
+        - algoritmo: 'quick', 'insertion', 'merge' ou 'auto' (seleciona com base no tamanho da lista).
+        """
+        if not lista:
             return []
-    
-    def processar_interacoes_do_csv(self, caminho_arquivo):
-        dados_brutos = self._carregar_interacoes_csv(caminho_arquivo)
-        cabecalho = ['id_usuario', 'nome_conteudo', 'id_conteudo', 'timestamp_interacao', 'nome_plataforma', 'tipo_interacao', 'watch_duration_seconds', 'comment_text']
-        for linha in dados_brutos[1:]:  # Ignora o cabeçalho
+
+        # Decide a função de chave com prioridade para key_func
+        chave_funcional = key_func
+        if not key_func and metrica:
+            chave_funcional = lambda obj: getattr(obj, metrica)() if callable(getattr(obj, metrica)) else getattr(obj, metrica)
+
+        # Seleciona o algoritmo com base no tipo ou tamanho
+        if algoritmo == 'auto':
+            algoritmo = 'insertion' if len(lista) <= 20 else 'quick'
+
+        if algoritmo == 'quick':
+            return quick_sort(lista, key_func=chave_funcional)
+        elif algoritmo == 'insertion':
+            return insertion_sort(lista, key_func=chave_funcional)
+        elif algoritmo == 'merge':
+            return merge_sort(lista, key_func=chave_funcional)
+        else:
+            raise ValueError(f"Algoritmo de ordenação desconhecido: {algoritmo}")
+
+    def processar_interacoes_da_fila(self):
+        """
+        Processa as interações da fila, registrando conteúdos, usuários e interações.
+        Essa função faz o processamento linha a linha de uma fila de interações, 
+        preenchendo árvores binárias de busca (_arvore_conteudos, _arvore_usuarios), 
+        mapeando plataformas e criando objetos de Interacao, Conteudo e Usuario.
+
+        ⏱️ Análise de Complexidade
+        1. Desenfileirar cada linha da fila:
+        Tempo: O(n) — onde n é o número de interações na fila.
+        Espaço: O(1) — apenas variáveis temporárias para cada linha.
+        2. Processar cada linha:
+        - Conversão de tipos (int, str) e manipulação de strings:
+        Tempo: O(1) — operações constantes para cada linha.
+        Espaço: O(1) — apenas variáveis temporárias.
+        - Verificação e inserção na árvore de conteúdos:
+        Tempo: O(log m) — onde m é o número de conteúdos já registrados (média).
+        Espaço: O(1) — apenas variáveis temporárias.
+        - Verificação e inserção na árvore de usuários:
+        Tempo: O(log k) — onde k é o número de usuários já registrados (média).
+        Espaço: O(1) — apenas variáveis temporárias.
+        - Criação de objetos Interacao, Conteudo e Usuario:
+        Tempo: O(1) — operações constantes para cada linha.
+        Espaço: O(1) — apenas variáveis temporárias.
+        3. Adicionar interações ao conteúdo e registrar no usuário:
+        Tempo: O(1) — operações constantes para cada linha.
+        Espaço: O(1) — apenas variáveis temporárias.
+        4. Total:
+        Tempo: O(n * (log m + log k)) — onde n é o número
+        de interações, m é o número de conteúdos e k é o número de usuários.
+        Espaço: O(1) — apenas variáveis temporárias.
+
+        """
+        while not self._fila_interacoes_brutas.esta_vazia():
+            linha = self._fila_interacoes_brutas.desenfileirar()
             try:
-                dados = dict(zip(cabecalho, linha))
-                usuario_id = int(dados['id_usuario'])
-                timestamp_interacao = dados['timestamp_interacao']
-                tipo_interacao = dados['tipo_interacao']
+                id_conteudo = int(linha[0].strip())
+                nome_conteudo = linha[1].strip().capitalize()
+                id_usuario = int(linha[2].strip())
+                timestamp_interacao = linha[3].strip()
+                nome_plataforma = linha[4].strip()
+                tipo_interacao = linha[5].strip()
                 try:
-                    watch_duration_seconds = int(dados['watch_duration_seconds']) if dados['watch_duration_seconds'] else 0
+                    tempo_consumo = int(linha[6].strip())
                 except ValueError:
-                    watch_duration_seconds = 0
-                    print(f"Erro ao converter watch_duration_seconds para inteiro na linha: {linha}")
-                comment_text = dados['comment_text']
-                nome_plataforma = dados['nome_plataforma']
-                nome_conteudo = dados['nome_conteudo']
-                plataforma = self.cadastrar_plataforma(nome_plataforma)
-                conteudo = self.__conteudos_registrados.get(nome_conteudo)
+                    tempo_consumo = 0
+                comentario = linha[7].strip() if len(linha) > 7 else ""
+
+                # Plataforma
+                if nome_plataforma not in self._plataformas_registradas:
+                    self._plataformas_registradas[nome_plataforma] = Plataforma(nome_plataforma)
+                plataforma = self._plataformas_registradas[nome_plataforma]
+
+                # Conteúdo
+                conteudo = self._arvore_conteudos.buscar(id_conteudo)
                 if not conteudo:
-                    conteudo = Conteudo(id_conteudo=len(self.__conteudos_registrados) + 1, nome_conteudo=nome_conteudo)
-                    self.__conteudos_registrados[nome_conteudo] = conteudo
-                usuario = self.__usuarios_registrados.get(usuario_id)
+                    conteudo = Conteudo(id_conteudo, nome_conteudo)
+                    self._arvore_conteudos.inserir(id_conteudo, conteudo)
+                else:
+                    # opcional: atualizar nome se desejar
+                    if not conteudo.nome_conteudo or conteudo.nome_conteudo.startswith("Conteudo_"):
+                        conteudo.nome_conteudo = nome_conteudo
+
+                # Usuário
+                usuario = self._arvore_usuarios.buscar(id_usuario)
                 if not usuario:
-                    usuario = Usuario(id_usuario=usuario_id)
-                    self.__usuarios_registrados[usuario_id] = usuario
-                dados_interacao = {
-                    'id_usuario': usuario_id,
+                    usuario = Usuario(id_usuario)
+                    self._arvore_usuarios.inserir(id_usuario, usuario)
+
+              
+
+                dados_brutos = {
+                    'id_usuario': id_usuario,
                     'timestamp_interacao': timestamp_interacao,
                     'tipo_interacao': tipo_interacao,
-                    'watch_duration_seconds': watch_duration_seconds,
-                    'comment_text': comment_text
+                    'watch_duration_seconds': tempo_consumo,
+                    'comment_text': comentario
                 }
-                interacao = Interacao(dados_interacao, conteudo, plataforma)
+                interacao = Interacao(dados_brutos, conteudo, plataforma)
+
+
                 conteudo.adicionar_interacao(interacao)
+                print(f"[OK] Interação registrada - Conteúdo: {conteudo.nome_conteudo}, Usuário: {id_usuario}, Tipo: {tipo_interacao}, Duração: {tempo_consumo}")
                 usuario.registrar_interacao(interacao)
-            except ValueError as e:
-                print(f"Erro ao processar interação: {e} - Dados: {linha}")
-            except KeyError as e:
-                print(f"Erro ao processar interação: campo {e} não encontrado - Dados: {linha}")
-      
-    def gerar_relatorio_engajamento_conteudos(self, top_n=None):
-        conteudos = list(self.__conteudos_registrados.values())
-        if top_n:
-            conteudos = sorted(conteudos, key=lambda c: c.calcular_total_interacoes_engajamento(), reverse=True)[:top_n]
-        print()
-        print(("-" * 30), "X",("-" * 30))
-        print(("-" * 30), "X",("-" * 30))
-        print(f"Relatório de Engajamento de Conteúdos (Versão: {self.VERSAO_ANALISE})".center(60))
-        print(("-" * 30), "X",("-" * 30))
-        print(("-" * 30), "X",("-" * 30))
-        print()
-        print(f"Total de conteúdos analisados: {len(conteudos)}")
-        print(f"Total de usuários registrados: {len(self.__usuarios_registrados)}")
-        print(f"Total de plataformas registradas: {len(self.__plataformas_registradas)}")
-        print()
-        print(("-" * 30), " X ",("-" * 30))
-        print()
-        for conteudo in conteudos:
-            print(f"Conteúdo: {conteudo.nome_conteudo.strip().title()} (ID: {conteudo.id_conteudo})")
-            print()
-            print(f"  Total de interações de engajamento: {conteudo.calcular_total_interacoes_engajamento()}")
-            for tipo, total in conteudo.calcular_contagem_por_tipo_interacao().items():
-                print(f"    {tipo}: {total}")
-            # print(f"  Contagem por tipo de interação: {conteudo.calcular_contagem_por_tipo_interacao()}")
-            print()
-            print(f"  Tempo total de consumo: {conteudo.calcular_tempo_total_consumo()} segundos")
-            print()
-            print(f"  Média de tempo de consumo: {conteudo.calcular_media_tempo_consumo():.2f} segundos")
-            print()
-            if len(conteudo.listar_comentarios()) > 0:
-                print("  Comentários:")
-            for i, comment in enumerate(conteudo.listar_comentarios(), start=1):
-                print(f"    Comentário {i}: {comment}")
-            # for i, comment in conteudo.listar_comentarios():
-            #     print(f"    Comentário{i}: {comment}")
-            # print(f"  Comentários: {conteudo.listar_comentarios()}\n")
-            print()
-            print(("-" * 30), " X ",("-" * 30))
-            print()
-        print()
-        print(("-" * 30), "X",("-" * 30))
-        print(("-" * 30), "X",("-" * 30))
-        print()
-        print("Relatório de Engajamento de Conteúdos Finalizado".center(60))
-        print()
-        print(("-" * 30), "X",("-" * 30))
-        print(("-" * 30), "X",("-" * 30))
-        print()
+
+            except Exception as e:
+                print(f"[ERRO] Linha inválida: {linha} - Motivo: {e}")
+        print(f"\nTotal de conteúdos: {len(self._arvore_conteudos.percurso_em_ordem())}")
+        print(f"Total de usuários: {len(self._arvore_usuarios.percurso_em_ordem())}")
         
-        return conteudos
+        
+        
+
+    def gerar_relatorio_engajamento_conteudos(self, top_n: int = None):
+        """
+        Gera um relatório de engajamento dos conteúdos, ordenando-os por diferentes métricas
+        como total de interações, tempo total de consumo e engajamento médio.
+        
+        Chama identificar_top_conteudos para ordenar os conteúdos com base na quantidade de interações de engajamento.
+
+        Imprime os top_n conteúdos com:
+        ID
+        Nome
+        Total de interações de engajamento
+        Tempo total de consumo
+
+        ⏱️ Análise de Complexidade
+        1. percurso_em_ordem() da árvore de conteúdos:
+        Tempo: O(n) — onde n é o número de conteúdos na árvore.
+        Espaço: O(n) — para armazenar a lista de conteúdos.
+        2. identificar_top_conteudos("calcular_total_interacoes_engajamento", top_n):
+        Tempo: O(n log n) — onde n é o número de conteúdos.
+        Espaço: O(n) — para armazenar a lista de conteúdos ordenados.
+        3. Loop de impressão dos top_n conteúdos:
+        Tempo: O(top_n) — geralmente pequeno e constante (ex: 5 ou 10).
+        Espaço: O(1) — apenas variáveis temporárias.
+        4. Total:
+        Tempo: O(n + n log n + top_n) — onde n é o número de conteúdos.
+        Espaço: O(n) — para armazenar a lista de conteúdos ordenados.
+        5. Observação:
+        Se top_n for None, a função retorna todos os conteúdos ordenados.
+
+        """
+        ordenados = self.identificar_top_conteudos("calcular_total_interacoes_engajamento", top_n)
+        return ordenados
+        # print("\n📈 Top Conteúdos por Interações:")
+        # for conteudo in ordenados:
+        #     print(f"{conteudo.id_conteudo} - {conteudo.nome_conteudo} | Interações: {conteudo.calcular_total_interacoes_engajamento()} | Tempo Total de Consumo: {conteudo.calcular_tempo_total_consumo()} segundos")
+        
+    def gerar_relatorio_atividade_usuarios(self, top_n: int = None):
+        """
+        Gera um relatório de atividade dos usuários, ordenando-os por total de interações.
+        Imprime os top_n usuários com:
+        ID do usuário
+        Total de interações
+        ⏱️ Análise de Complexidade
+        1. percurso_em_ordem() da árvore de usuários:
+        Tempo: O(n) — onde n é o número de usuários na árvore.
+        Espaço: O(n) — para armazenar a lista de usuários.
+        2. quick_sort(usuarios, "calcular_total_interacoes"):
+        Tempo médio: O(n log n) — onde n é o número de usuários.
+        Tempo pior caso: O(n²) — se o pivô estiver sempre mal escolhido.
+        Espaço: O(log n) — para a pilha de recursão do quick_sort.
+        3. Loop de impressão dos top_n usuários:
+        Tempo: O(top_n) — geralmente pequeno e constante (ex: 5 ou 10).
+        Espaço: O(1) — apenas variáveis temporárias.
+        4. Total:
+        Tempo: O(n + n log n + top_n) — onde n é o número de usuários.
+        Espaço: O(n) — para armazenar a lista de usuários.
+
+        """
+        usuarios = self._arvore_usuarios.percurso_em_ordem()
+
+        if not usuarios:
+            print("Nenhum usuário registrado.")
+            return
+
+        # Ordena os usuários pelo total de interações (decrescente)
+        # ordenados = self._ordenar(lista=usuarios, metrica="calcular_total_interacoes", algoritmo="auto")
+        
+        ordenados = merge_sort(usuarios, "calcular_total_interacoes")
+
+        if top_n is not None:
+            ordenados = ordenados[:top_n]
+
+        print(f"Top {top_n if top_n else len(ordenados)} Usuários por Total de Interações:")
+        for i, usuario in enumerate(ordenados, 1):
+            print(f"{i}. Usuário ID: {usuario.id_usuario} - Total de Interações: {usuario.calcular_total_interacoes()}")
     
-    def gerar_relatorio_atividade_usuarios(self, top_n=None):
-        usuarios = list(self.__usuarios_registrados.values())
-        if top_n:
-            usuarios = sorted(usuarios, key=lambda u: len(u._Usuario__interacoes_realizadas), reverse=True)[:top_n]
-        for usuario in usuarios:
-            print(f"\nUsuário ID: {usuario.id_usuario}")
-            print(f"  Total de interações: {len(usuario._Usuario__interacoes_realizadas)}")
-            print(f"  Conteúdos únicos consumidos: {len(usuario.obter_conteudos_unicos_consumidos())}")
-            print("Plataformas mais frequentes:")
-            plataformas_frequentes = usuario.plataformas_mais_frequentes()
-            for nome_plataforma in plataformas_frequentes:
-                plataforma = self.cadastrar_plataforma(nome_plataforma)
-                tempo_consumo = usuario.calcular_tempo_total_consumo_plataforma(plataforma)
-                print(f" - {plataforma.nome_plataforma}: {tempo_consumo} segundos")
+    def identificar_top_conteudos(self, metrica: str, n: int = None):
+        """
+        Identifica os top conteúdos com base em uma métrica específica.
+        Parâmetros:
+        - metrica: string com o nome do método a ser usado para ordenação (ex   : "calcular_tempo_total_consumo").
+        - n: número de conteúdos a serem retornados (se None, retorna todos).
+        Retorna:
+        - Lista dos conteúdos ordenados pela métrica especificada.
+        ⏱️ Análise de Complexidade
+        1. percurso_em_ordem() da árvore de conteúdos:
+        Tempo: O(n) — onde n é o número de conteúdos na árvore.
+        Espaço: O(n) — para armazenar a lista de conteúdos.
+        2. insertion_sort(conteudos, metrica):
+        Tempo médio: O(n log n) — onde n é o número de conteúdos.
+        Tempo pior caso: O(n²) — se a lista já estiver ordenada ou quase ordenada.
+        Espaço: O(n) — para armazenar a lista ordenada.
+        3. Loop de impressão dos top_n conteúdos:
+        Tempo: O(n) — onde n é o número de conteúdos a serem impressos.
+        Espaço: O(1) — apenas variáveis temporárias.
+        4. Total:
+        Tempo: O(n + n log n + n) — onde n é o número de conteúdos.
+        Espaço: O(n) — para armazenar a lista de conteúdos ordenados.
+        5. Observação:
+        Se n for None, a função retorna todos os conteúdos ordenados.
+        Se n for um valor positivo, retorna apenas os top_n conteúdos ordenados.
 
-            # plataformas_frequentes = usuario.plataformas_mais_frequentes()
-            # for plataforma in plataformas_frequentes:
-            #     tempo_consumo = usuario.calcular_tempo_total_consumo_plataforma(plataforma)
-            #     print(f"    - {plataforma.nome_plataforma}: {tempo_consumo} segundos")
-                # print(f"    - {plataforma} - {tempo_consumo} segundos")
-            # print(f"  Tempo total de consumo por plataforma:")
-            # for plataforma in self.listar_plataformas():
-            #     tempo_consumo = usuario.calcular_tempo_total_consumo_plataforma(plataforma)
-            #     print(f"    {plataforma.nome_plataforma}: {tempo_consumo} segundos")
-            
-            print()
-                
+        """
+        conteudos = self._arvore_conteudos.percurso_em_ordem()
+        ordenados = insertion_sort(conteudos, metrica)
+        if not ordenados:
+            print("Nenhum conteúdo registrado.")
+            return []
+        print(f"Top {n if n else len(ordenados)} Conteúdos por {metrica.replace('_', ' ').title()}:")
+        for i, conteudo in enumerate(ordenados[:n], 1):
+            print(f"{i}. Conteúdo ID: {conteudo.id_conteudo} - Nome: {conteudo.nome_conteudo} - {metrica.replace('_', ' ').title()}: {getattr(conteudo, metrica)()}")
+        return ordenados[:n] if n else ordenados
 
-            # print(f"  Plataformas mais frequentes: {usuario.plataformas_mais_frequentes()}\n")
+    def identificar_top_plataformas(self, tipo_engajamento=None, top_n=5):
+        """
+        Identifica as plataformas com maior número de interações de engajamento.
+        Parâmetros:
+        - tipo_engajamento: string com o tipo de interação a ser filtrado (ex: "share", "like", "comment", "view_start").
+        - top_n: número de plataformas a serem retornadas (se None, retorna todas).
+        Retorna:
+        - Lista das plataformas ordenadas pelo total de interações.
+        ⏱️ Análise de Complexidade
+        1. percurso_em_ordem() da árvore de conteúdos:
+        Tempo: O(n) — onde n é o número de conteúdos na árvore.
+        Espaço: O(n) — para armazenar a lista de conteúdos.
+        2. Loop para contar interações por plataforma:
+        Tempo: O(n * m) — onde n é o número de conteúdos e m é o número de interações por conteúdo.
+        Espaço: O(p) — onde p é o número de plataformas distintas.
+        3. insertion_sort(plataformas_total.items(), key_func):
+        Tempo médio: O(p log p) — onde p é o número de plataformas distintas.
+        Tempo pior caso: O(p²) — se a lista já estiver ordenada ou quase ordenada.
+        Espaço: O(log p) — para a pilha de recursão do insertion_sort.
+        4. Loop de impressão dos top_n plataformas:
+        Tempo: O(top_n) — geralmente pequeno e constante (ex: 5 ou  10).
+        Espaço: O(1) — apenas variáveis temporárias.
+        5. Total:
+        Tempo: O(n + n * m + p log p + top_n) — onde n é o número de conteúdos, m é o número de interações por conteúdo e p é o número de plataformas distintas.
+        Espaço: O(n + p) — para armazenar as interações e plataformas.
 
-        return usuarios
-    
-    def identificar_top_conteudos(self, metrica, n=5):
-        if metrica not in ['tempo_total_consumo', 'total_interacoes_engajamento']:
-            raise ValueError("Métrica inválida. Use 'tempo_total_consumo' ou 'total_interacoes_engajamento'.")
-        conteudos = list(self.__conteudos_registrados.values())
-        if metrica == 'tempo_total_consumo':
-            conteudos = sorted(conteudos, key=lambda c: c.calcular_tempo_total_consumo(), reverse=True)[:n]
-        elif metrica == 'total_interacoes_engajamento':
-            conteudos = sorted(conteudos, key=lambda c: c.calcular_total_interacoes_engajamento(), reverse=True)[:n]
-        # print(f"Total de conteúdos analisados: {len(conteudos)}")
-        
-        print(f"\nTop {n} conteúdos por '{metrica}':")
-        print()
-        for conteudo in conteudos:
-            print(f"Conteúdo: {conteudo.nome_conteudo} (ID: {conteudo.id_conteudo})")
-            if metrica == 'tempo_total_consumo':
-                print(f"  Tempo total de consumo: {conteudo.calcular_tempo_total_consumo()} segundos")
-            elif metrica == 'total_interacoes_engajamento':
-                print(f"  Total de interações de engajamento: {conteudo.calcular_total_interacoes_engajamento()}")
-            print()
-        
-        print()
-        print(("-" * 20), " X ",("-" * 20))
-        print()
-        
-        print(f"Total de usuários registrados: {len(self.__usuarios_registrados)}")
-        print(f"Total de plataformas registradas: {len(self.__plataformas_registradas)}")
-        print(f"Versão do sistema de análise: {self.VERSAO_ANALISE}")
-        print()
+        """
+        plataformas_total = defaultdict(int)
+        plataformas_por_tipo = defaultdict(lambda: defaultdict(int))
 
-    
-    def menu_principal(self):
+        for conteudo in self._arvore_conteudos.percurso_em_ordem():
+            for interacao in conteudo.interacoes:
+                tipo = interacao.tipo_interacao.strip().lower()
+                nome_plataforma = interacao.plataforma_interacao.nome_plataforma
 
-        while True:
-            print("\n" + ("-" * 30))
-            print("Bem-vindo ao Sistema de Análise de Engajamento!")
-            print(f"Versão: {self.VERSAO_ANALISE}")
-            print("Selecione uma opção:")
-            print("1. Cadastrar Plataforma")
-            print("2. Listar Plataformas")
-            print("3. Gerar Relatório de Engajamento de Conteúdos")
-            print("4. Gerar Relatório de Atividade de Usuários")
-            print("5. Identificar Top Conteúdos")
-            print("0. Sair")
-            opcao = input("Digite a opção desejada: ")
-            print(("-" * 30))
-            print()
-            if opcao == '1':
-                nome_plataforma = input("Digite o nome da plataforma: ")
-                plataforma = self.cadastrar_plataforma(nome_plataforma)
-                print(f"Plataforma '{plataforma.nome_plataforma}' cadastrada com sucesso!")
-            elif opcao == '2':
-                plataformas = self.listar_plataformas()
-                if plataformas:
-                    print("Plataformas registradas:")
-                    for plataforma in plataformas:
-                        print(f"- {plataforma.nome_plataforma} (ID: {plataforma.id_plataforma})")
-                else:
-                    print("Nenhuma plataforma registrada.")
-            
-            elif opcao == '3':
-                top_n = input("Deseja ver os top N conteúdos? (Digite um número ou deixe em branco para ver todos): ")
-                top_n = int(top_n) if top_n.isdigit() else None
-                self.gerar_relatorio_engajamento_conteudos(top_n)
-            elif opcao == '4':
-                top_n = input("Deseja ver os top N usuários? (Digite um número ou deixe em branco para ver todos): ")
-                top_n = int(top_n) if top_n.isdigit() else None
-                self.gerar_relatorio_atividade_usuarios(top_n)
-            elif opcao == '5':
-                metrica = input("Digite a métrica (tempo_total_consumo ou total_interacoes_engajamento): ")
-                n = input("Quantos conteúdos deseja ver? (Digite um número): ")
-                n = int(n) if n.isdigit() else 5
-                self.identificar_top_conteudos(metrica, n)
-            elif opcao == '0':
-                print("Saindo do sistema...")
-                break
+                # Filtra se necessário
+                if tipo_engajamento is None or tipo == tipo_engajamento:
+                    plataformas_total[nome_plataforma] += 1
+                    plataformas_por_tipo[nome_plataforma][tipo] += 1
+
+        # Ordenar as plataformas por total
+        plataformas_ordenadas = insertion_sort(list(plataformas_total.items()), key_func=lambda x: x[1])
+
+        # Título
+        tipo_txt = f"do tipo '{tipo_engajamento}'" if tipo_engajamento else "de todos os tipos"
+        print(f"\nTop {top_n} plataformas por interações {tipo_txt}:")
+
+        for i, (nome, total) in enumerate(plataformas_ordenadas[:top_n], 1):
+            print(f"{i}. {nome} - {total} interações")
+            if tipo_engajamento is None:
+                for tipo in ["share", "like", "comment", "view_start"]:
+                    qtd = plataformas_por_tipo[nome][tipo]
+                    print(f"   - {tipo.capitalize()}: {qtd} interações")
             else:
-                print("Opção inválida. Tente novamente.")
+                qtd = plataformas_por_tipo[nome][tipo_engajamento]
+                print(f"   - {tipo_engajamento.capitalize()}: {qtd} interações")
 
+        return plataformas_ordenadas[:top_n] if top_n else plataformas_ordenadas
     
-    # def __str__(self):
-    #     return f"Sistema de Análise de Engajamento (Versão: {self.VERSAO_ANALISE})"
-    # def __repr__(self):
-    #     return f"SistemaAnaliseEngajamento()"
+    
+    def identificar_top_usuarios_tempo_consumo(self, top_n=10):
+        """
+        Identifica os usuários com maior tempo total de consumo de conteúdo.
+        Parâmetros:
+        - top_n: número de usuários a serem retornados (se None, retorna todos).
+        Retorna:
+        - Lista dos usuários ordenados pelo tempo total de consumo.
+        ⏱️ Análise de Complexidade
+        1. percurso_em_ordem() da árvore de usuários:
+        Tempo: O(n) — onde n é o número de usuários na árvore.
+        Espaço: O(n) — para armazenar a lista de usuários.
+        2. merge_sort(usuarios, "calcular_tempo_total_consumo"):
+        Tempo médio: O(n log n) — onde n é o número de usuários.
+        Tempo pior caso: O(n²) — se o pivô estiver sempre mal escolhido.
+        Espaço: O(log n) — para a pilha de recursão do merge_sort.
+        3. Loop de impressão dos top_n usuários:
+        Tempo: O(top_n) — geralmente pequeno e constante (ex: 5 ou 10).
+        Espaço: O(1) — apenas variáveis temporárias.
+        4. Total:
+        Tempo: O(n + n log n + top_n) — onde n é o número de usuários.
+        Espaço: O(n) — para armazenar a lista de usuários.
+        5. Observação:
+        Se top_n for None, a função retorna todos os usuários ordenados.
+
+        """
+        usuarios = self._arvore_usuarios.percurso_em_ordem()
+        
+        # Ordena com base no método calcular_tempo_total_consumo
+        usuarios_ordenados = merge_sort(usuarios, "calcular_tempo_total_consumo")
+        
+        print(f"Top {top_n} usuários por tempo total de consumo:")
+        for i, u in enumerate(usuarios_ordenados[:top_n], 1):
+            total = u.calcular_tempo_total_consumo()
+            print(f"{i}. Usuário {u.id_usuario} - {total} segundos")
+    
+    def identificar_top_usuarios(self, metrica: str, n: int = None):
+        """
+        Identifica os top usuários com base em uma métrica específica.
+        Parâmetros:
+        - metrica: string com o nome do método a ser usado para ordenação (ex: "calcular_tempo_total_consumo").
+        - n: número de usuários a serem retornados (se None, retorna todos).
+        Retorna:
+        - Lista dos usuários ordenados pela métrica especificada.
+        ⏱️ Análise de Complexidade
+        1. percurso_em_ordem() da árvore de usuários:
+        Tempo: O(n) — onde n é o número de usuários na árvore.
+        Espaço: O(n) — para armazenar a lista de usuários.
+        2. merge_sort(usuarios, metrica):
+        Tempo médio: O(n log n) — onde n é o número de usuários.
+        Tempo pior caso: O(n²) — se o pivô estiver sempre mal escolhido.
+        Espaço: O(log n) — para a pilha de recursão do merge_sort.
+        3. Loop de impressão dos top_n usuários:
+        Tempo: O(n) — onde n é o número de usuários a serem impressos.
+        Espaço: O(1) — apenas variáveis temporárias.
+        4. Total:
+        Tempo: O(n + n log n + n) — onde n é o número de usuários.
+        Espaço: O(n) — para armazenar a lista de usuários ordenados.
+
+        """
+        usuarios = self._arvore_usuarios.percurso_em_ordem()
+        ordenados = merge_sort(usuarios, metrica)
+        if not ordenados:
+            print("Nenhum usuário registrado.")
+            return []
+        print(f"Top {n if n else len(ordenados)} Usuários por {metrica.replace('_', ' ').title()}:")
+        for i, usuario in enumerate(ordenados[:n], 1):
+            print(f"{i}. Usuário ID: {usuario.id_usuario} - {metrica.replace('_', ' ').title()}: {getattr(usuario, metrica)()}")
+        return ordenados[:n] if n else ordenados
+    
+    def identificar_top_conteudos_comentados(self, top_n=5):
+        """
+        Identifica os conteúdos mais comentados e imprime os top_n conteúdos com mais comentários.
+        Parâmetros:
+        - top_n: número de conteúdos a serem retornados (se None, retorna todos).
+        Retorna:
+        - Lista dos conteúdos ordenados pela quantidade de comentários.
+        ⏱️ Análise de Complexidade
+        1. percurso_em_ordem() da árvore de conteúdos:
+        Tempo: O(n) — onde n é o número de conteúdos na árvore.
+        Espaço: O(n) — para armazenar a lista de conteúdos.
+        2. Loop para contar comentários por conteúdo:
+        Tempo: O(n * m) — onde n é o número de conteúdos e m é o número de interações por conteúdo.
+        Espaço: O(m) — onde m é o número de conteúdos distintos.
+        3. insertion_sort(lista, key_func):
+        Tempo médio: O(m log m) — onde m é o número de conteúdos distintos.
+        Tempo pior caso: O(m²) — se a lista já estiver ordenada ou quase ordenada.
+        Espaço: O(log m) — para a pilha de recursão do insertion_sort.
+        4. Loop de impressão dos top_n conteúdos:
+        Tempo: O(top_n) — geralmente pequeno e constante (ex: 5 ou 10).
+        Espaço: O(1) — apenas variáveis temporárias.
+
+        """
+        conteudos = self._arvore_conteudos.percurso_em_ordem()
+        # Mapeia cada conteúdo para sua contagem de comentários
+        lista = []
+        for conteudo in conteudos:
+            total_comentarios = sum(
+                1 for i in conteudo.interacoes
+                if i.tipo_interacao == "comment"
+            )
+            lista.append((conteudo, total_comentarios))
+
+        # Ordena usando quick_sort se quiser (decrescente pelo total de comentários)
+        lista_ordenada = insertion_sort(lista, key_func=lambda x: x[1])
+
+        print(f"\nTop {top_n} conteúdos mais comentados:")
+        for i, (conteudo, total) in enumerate(lista_ordenada[:top_n], 1):
+            print(f"{i}. {conteudo.nome_conteudo} (ID {conteudo.id_conteudo}) - {total} comentários")
+        
+        return lista_ordenada[:top_n] if top_n else lista_ordenada
+    
+    # Total de interações por tipo de conteúdo (Liste os conteúdos com maior quantidade de interações).
+    def identificar_total_interacoes_por_tipo_conteudo(self, top_n=100):
+        """
+        Identifica o total de interações por tipo de conteúdo e imprime os top_n conteúdos com mais interações.
+        Parâmetros:
+        - top_n: número de conteúdos a serem retornados (se None, retorna todos).   
+        Retorna:
+        - Lista dos conteúdos ordenados pelo total de interações.
+        ⏱️ Análise de Complexidade
+        1. percurso_em_ordem() da árvore de conteúdos:
+        Tempo: O(n) — onde n é o número de conteúdos na árvore.
+        Espaço: O(n) — para armazenar a lista de conteúdos.
+        2. Loop para contar interações por conteúdo:
+        Tempo: O(n * m) — onde n é o número de conteúdos e m é o número de interações por conteúdo.
+        Espaço: O(m) — onde m é o número de conteúdos distintos.
+        3. insertion_sort(conteudos, key_func):
+        Tempo médio: O(m log m) — onde m é o número de conteúdos distintos.
+        Tempo pior caso: O(m²) — se a lista já estiver ordenada ou quase ordenada.
+        Espaço: O(log m) — para a pilha de recursão do insertion_sort.
+        4. Loop de impressão dos top_n conteúdos:
+        Tempo: O(top_n) — geralmente pequeno e constante (ex: 5 ou 10).
+        Espaço: O(1) — apenas variáveis temporárias.
+        5. Total:
+        Tempo: O(n + n * m + m log m + top_n) — onde n é o número de conteúdos, m é o número de interações por conteúdo e m é o número de conteúdos distintos.
+        Espaço: O(n + m) — para armazenar as interações e conteúdos.
+
+        """
+        conteudos = self._arvore_conteudos.percurso_em_ordem()
+        total_interacoes = defaultdict(int)
+
+        for conteudo in conteudos:
+            total_interacoes[conteudo.nome_conteudo] += len(conteudo.interacoes)
+
+        # Ordena os conteúdos pelo total de interações (decrescente)
+        conteudos_ordenados = insertion_sort(list(total_interacoes.items()), key_func=lambda x: x[1])
+
+        print(f"\nTop {top_n} conteúdos por total de interações:")
+        for i, (nome, total) in enumerate(conteudos_ordenados[:top_n], 1):
+            print(f"{i}. {nome} - {total} interações")
+        
+        return conteudos_ordenados[:top_n] if top_n else conteudos_ordenados
+    
+    def identificar_tempo_medio_consumo_por_plataforma(self, top_n=5):
+        """
+        Identifica o tempo médio de consumo por plataforma e imprime os top_n plataformas com maior média de consumo.
+        Parâmetros:
+        - top_n: número de plataformas a serem retornadas (se None, retorna todas).
+        Retorna:
+        - Lista das plataformas ordenadas pelo tempo médio de consumo.
+        ⏱️ Análise de Complexidade
+        1. percurso_em_ordem() da árvore de conteúdos:
+        Tempo: O(n) — onde n é o número de conteúdos na árvore.
+        Espaço: O(n) — para armazenar a lista de conteúdos.
+        2. Loop para calcular o tempo médio de consumo por plataforma:
+        Tempo: O(n * m) — onde n é o número de conteúdos e m é o número de interações por conteúdo.
+        Espaço: O(p) — onde p é o número de plataformas distintas.
+        3. insertion_sort(plataformas.items(), key_func):
+        Tempo médio: O(p log p) — onde p é o número de plataformas distintas.
+        Tempo pior caso: O(p²) — se a lista já estiver ordenada ou quase ordenada.
+        Espaço: O(log p) — para a pilha de recursão do insertion_sort.
+        4. Loop de impressão dos top_n plataformas:
+        Tempo: O(top_n) — geralmente pequeno e constante (ex: 5 ou 10).
+        Espaço: O(1) — apenas variáveis temporárias.
+        5. Total:
+        Tempo: O(n + n * m + p log p + top_n) — onde
+        n é o número de conteúdos, m é o número de interações por conteúdo e p é o número de plataformas distintas.
+        Espaço: O(n + p) — para armazenar as interações e plataformas.
+
+        """
+
+        plataformas = defaultdict(list)
+
+        for conteudo in self._arvore_conteudos.percurso_em_ordem():
+            for interacao in conteudo.interacoes:
+                plataformas[interacao.plataforma_interacao.nome_plataforma].append(interacao.watch_duration_seconds)
+
+        # Calcula a média de consumo para cada plataforma
+        medias = {nome: sum(duracoes) / len(duracoes) for nome, duracoes in plataformas.items()}
+
+        # Ordena as plataformas pela média de consumo (decrescente)
+        plataformas_ordenadas = insertion_sort(list(medias.items()), key_func=lambda x: x[1])
+
+        print(f"\nTop {top_n} plataformas por tempo médio de consumo:")
+        for i, (nome, media) in enumerate(plataformas_ordenadas[:top_n], 1):
+            print(f"{i}. {nome} - {media:.2f} segundos")
+        
+        return plataformas_ordenadas[:top_n] if top_n else plataformas_ordenadas
+
+    def identificar_quantidade_comentarios_por_conteudo(self, top_n=5):
+        """
+        Identifica a quantidade de comentários por conteúdo e imprime os top_n conteúdos com mais comentários.
+        Parâmetros:
+        - top_n: número de conteúdos a serem retornados (se None, retorna todos).
+        Retorna:
+        - Lista dos conteúdos ordenados pela quantidade de comentários.
+        ⏱️ Análise de Complexidade
+        1. percurso_em_ordem() da árvore de conteúdos:
+        Tempo: O(n) — onde n é o número de conteúdos na árvore.
+        Espaço: O(n) — para armazenar a lista de conteúdos.
+        2. Loop para contar comentários por conteúdo:
+        Tempo: O(n) — onde n é o número total de conteúdos.
+        Espaço: O(m) — onde m é o número de conteúdos distintos.
+        3. insertion_sort(conteudos.items(), key_func):
+        Tempo médio: O(m log m) — onde m é o número de conteúdos distintos.
+        Tempo pior caso: O(m²) — se a lista já estiver ordenada ou quase ordenada.
+        Espaço: O(log m) — para a pilha de recursão do insertion_sort.
+        4. Loop de impressão dos top_n conteúdos:
+        Tempo: O(top_n) — geralmente pequeno e constante (ex: 5 ou 10).
+        Espaço: O(1) — apenas variáveis temporárias.
+        5. Total:
+        Tempo: O(n + n + m log m + top_n) — onde n é o número de conteúdos,
+        m é o número de comentários por conteúdo e m é o número de conteúdos distintos.
+        Espaço: O(n + m) — para armazenar as interações e conteúdos.
+
+        """
+            
+        conteudos = self._arvore_conteudos.percurso_em_ordem()
+        
+        comentarios_por_conteudo = defaultdict(int)
+
+        for conteudo in conteudos:
+            for interacao in conteudo.interacoes:
+                if interacao.tipo_interacao == "comment":
+                    comentarios_por_conteudo[conteudo.nome_conteudo] += 1
+
+        # Ordena os conteúdos pelo número de comentários (decrescente)
+        conteudos_ordenados = insertion_sort(list(comentarios_por_conteudo.items()), key_func=lambda x: x[1])
+
+        print(f"\nTop {top_n} conteúdos por quantidade de comentários:")
+        for i, (nome, total) in enumerate(conteudos_ordenados[:top_n], 1):
+            print(f"{i}. {nome} - {total} comentários")
+            # imprimir os comentários de cada conteúdo
+        for conteudo in self._arvore_conteudos.percurso_em_ordem():
+            print(f"Conteúdo: {conteudo.nome_conteudo} (ID: {conteudo.id_conteudo})")
+            
+
+            
+        return conteudos_ordenados[:top_n] if top_n else conteudos_ordenados

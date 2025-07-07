@@ -1,88 +1,140 @@
-# 📈 Análise de Engajamento de Mídias Globo
 
-Um **pipeline em Python puro** para simular a coleta, limpeza, estruturação e análise de dados de engajamento do público com conteúdos da Globo.
+# 📊 Projeto Unificado - Fase 3: Análise de Engajamento de Mídias Globo com Estruturas de Dados
 
----
+## 👥 Integrantes
+- Pierre  
+- Maria  
+- Beatriz  
+- Nando  
 
-## 🧐 Visão Geral
-
-- **Python 3.6+**: apenas módulos nativos (`csv`, `collections.defaultdict`).
-- **Dados**: `interações_globo.csv` com interações simuladas de views, likes, shares e comments.
-- **Arquitetura**: funções independentes para cada etapa do pipeline.
-- **Robustez**: `try/except` em todas as conversões de tipo.
-- **Saída**: relatório formatado, com contagens padronizadas e comentários numerados.
+## 🎯 Objetivo
+Aplicar os princípios fundamentais de **Algoritmos e Estruturas de Dados** na análise de engajamento de conteúdos da Globo, utilizando **Fila**, **Árvore de Busca Binária** e algoritmos de **Ordenação** (Quick Sort, Insertion Sort, Merge Sort) para organizar e processar dados de forma eficiente.
 
 ---
 
-## 🚀 Funcionalidades
+## 📁 Estrutura do Projeto
 
-1. **Carregar CSV**
-   Valida existência e não-vazio do arquivo, retorna lista de listas.
-
-2. **Converter para Dicionários**
-   Cada linha vira um `dict[cabeçalho → valor]`.
-
-3. **Limpeza de Campos**
-   - IDs (`int` ou `None`)
-   - `watch_duration_seconds` (`int` ou `0`)
-   - Strings `.strip()` + `.title()`
-
-4. **Cálculo de Métricas**
-   - Total de engajamentos (`like`, `share`, `comment`)
-   - Contagem individual por tipo
-   - Tempo total e média de visualização
-   - Comentários listados e numerados
-
-5. **Relatório Formatado**
-   Prints organizados por conteúdo, com ordem fixa de tipos e emojis para destaque.
-
----
-
-## 📷 Exemplo de Saída
-
-```console
-Iniciando Fase 1: Coleta e Estruturação Inicial de Dados de Engajamento Globo
-
-Total de 150 linhas de dados (mais cabeçalho) carregadas.
-
-Conteúdo ID: 1
-Nome: Jornal Nacional – Edição de 20/10/2024
-Total de engajamentos: 120
-
-Contagem por tipo de interação:
-  • view_start :  30
-  • like       :  50
-  • share      :  20
-  • comment    :  20
-
-Tempo total de visualização: 45000 s  
-Média de tempo de visualização: 1500.0 s  
-
-Comentários:
-   1. Parabéns pela reportagem!  
-   2. Muito informativo.  
-   3. Gostei!  
-
-Top 5 por tempo de visualização:
- 1. Jornal Nacional – Edição de 20/10/2024: 45000 s  
- 2. Novela Renascer – Capítulo 15:        30000 s  
- 3. Podcast “Papo de Segunda”:           15000 s  
- 4. Compacto Brasileirão:                12000 s  
- 5. Receita de Bolo de Cenoura:          8000 s  
+```
+projeto_engajamento_fase_3/
+│
+├── main.py                         # Orquestrador principal
+├── interacoes_globo.csv           # Arquivo com interações brutas
+│
+├── entidades/                     # Entidades do domínio
+│   ├── conteudo.py                # Classes Conteudo, Video, Podcast, Artigo
+│   ├── interacao.py               # Classe Interacao
+│   ├── plataforma.py              # Classe Plataforma
+│   └── usuario.py                 # Classe Usuario
+│
+├── estruturas_dados/              # Estruturas de dados
+│   ├── fila.py                    # Implementação da Fila (FIFO)
+│   └── arvore_binaria_busca.py   # Implementação da Árvore de Busca Binária
+│
+├── analise/                       # Módulo de análise e relatórios
+│   └── sistema.py                 # SistemaAnaliseEngajamento: análise e ordenação
+│
+└── ordenacao/
+    └── ordenacao.py              # Algoritmos de ordenação: quick, merge e insertion
 ```
 
-**Fim da análise de engajamento.**
+---
+
+## 🧠 Estruturas Utilizadas
+
+### 🔁 Fila (Queue)
+Utilizada para leitura e processamento sequencial das linhas do CSV (First-In, First-Out).
+
+- **Operações**:
+  - `enfileirar(linha_csv)`
+  - `desenfileirar()`
+  - `esta_vazia()`
+
+### 🌳 Árvores de Busca Binária (BST)
+Utilizadas para armazenar e recuperar eficientemente dados de `Conteudo` e `Usuario`.
+
+#### Árvore de Conteúdos
+- Chave: `_id_conteudo`
+- Operações:
+  - `inserir_conteudo(conteudo)`
+  - `buscar_conteudo(id)`
+  - `remover_conteudo(id)`
+  - `percurso_em_ordem()`
+
+#### Árvore de Usuários
+- Chave: `_id_usuario`
+- Operações análogas à árvore de conteúdos.
 
 ---
 
-## 👥 Integrantes do Grupo
+## 🧮 Algoritmos de Ordenação
 
-*   mayasrl
-*   Pierre
-*   Beatriz
-*   Fernando
+- **Quick Sort**: usado como padrão para listas grandes.
+- **Insertion Sort**: utilizado em listas pequenas (ex: resultados já quase ordenados).
+- **Merge Sort**: alternativa híbrida eficiente para casos intermediários.
+
+> Todos os algoritmos permitem ordenação por **métrica** (ex: `calcular_total_interacoes`) ou por **função chave** (`key_func`), além de suporte para ordenação reversa (descendente).
 
 ---
 
-<p align="center"> Desenvolvido durante o curso <strong>Academia Globotech</strong> da Ada em parceria com a Globo, com 💛 por <strong>@mayasrl e equipe</strong></p> 
+## 📊 Relatórios Gerados
 
+### 1. **Ranking de Conteúdos Mais Consumidos**
+- Ordenados por tempo total de consumo (`watch_duration_seconds`).
+
+### 2. **Usuários com Maior Tempo Total de Consumo**
+- Soma do tempo de consumo em todas as interações.
+
+### 3. **Plataformas com Maior Engajamento**
+- Interações do tipo `view_start`, `like`, `share`, `comment` agrupadas por plataforma.
+
+### 4. **Conteúdos Mais Comentados**
+- Ranking de conteúdos com maior número de interações do tipo `comment`.
+
+### 5. **Total de Interações por Tipo de Conteúdo**
+- Agrupamento por conteúdo e total de interações recebidas.
+
+### 6. **Tempo Médio de Consumo por Plataforma**
+- Média dos tempos de consumo agrupados por plataforma.
+
+### 7. **Quantidade de Comentários por Conteúdo**
+- Lista com os conteúdos e quantidade de comentários registrados.
+
+---
+
+## ⚙️ Execução
+
+1. Coloque o arquivo `interacoes_globo.csv` na raiz do projeto.
+2. Execute o projeto com:
+
+```bash
+python main.py
+```
+
+3. Acompanhe o processamento e geração de relatórios diretamente no terminal.
+
+---
+
+## 📈 Complexidade dos Algoritmos
+
+Cada método implementado está documentado com suas análises de complexidade:
+
+- **Fila**:  
+  - Enfileirar/Desenfileirar → `O(1)`
+- **Árvore BST**:  
+  - Inserção/Busca/Remoção → `O(log n)` em média, `O(n)` no pior caso
+- **Quick Sort**:  
+  - Média → `O(n log n)`  
+  - Pior caso → `O(n²)`
+- **Insertion Sort**:  
+  - Melhor caso (quase ordenado) → `O(n)`  
+  - Pior caso → `O(n²)`
+- **Merge Sort**:  
+  - Sempre → `O(n log n)`
+
+---
+
+## ✅ Conclusão
+
+O projeto integra os conceitos de estruturas de dados e algoritmos de ordenação aplicados à análise real de dados de engajamento. A escolha criteriosa das estruturas permitiu ganhos de performance no acesso, organização e visualização dos dados de forma eficiente e escalável.
+
+---

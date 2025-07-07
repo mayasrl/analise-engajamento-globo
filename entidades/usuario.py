@@ -64,6 +64,20 @@ class Usuario:
         sorted_plataformas = sorted(contagem.items(), key=lambda x: x[1], reverse=True)
         return [plataforma for plataforma, _ in sorted_plataformas[:top_n]]
 
+    def calcular_tempo_total_consumo(self):
+        """
+        Calcula o tempo total de consumo em todas as interações do usuário.
+        :return: Tempo total de consumo em segundos.
+        """
+        return sum(i.watch_duration_seconds for i in self.__interacoes_realizadas)
+    
+    def calcular_total_interacoes(self):
+        """
+        Calcula o total de interações realizadas pelo usuário.
+        :return: Número total de interações.
+        """
+        return len(self.__interacoes_realizadas)
+
     def __str__(self):
         return f"Usuario(ID: {self.id_usuario})"
 
