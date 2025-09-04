@@ -1,48 +1,152 @@
-# Projeto Unificado - Fase 4: Persistência e Análise de Engajamento com Banco de Dados Relacional
+# 📊 Análise de Engajamento Globo
 
-## Objetivo
+Este projeto visa desenvolver um sistema completo de análise de engajamento de conteúdos da Globo, aplicando progressivamente conceitos fundamentais de programação, desde lógica básica até banco de dados relacionais. O sistema é capaz de processar dados de interações de usuários com conteúdos em diferentes plataformas da Globo, identificando padrões de consumo e gerando relatórios analíticos.
 
-Nesta fase do projeto, o objetivo é evoluir o sistema de análise de engajamento para utilizar um banco de dados relacional (MySQL) para persistência dos dados. Isso torna a solução mais robusta, escalável e alinhada com as práticas de mercado.
+---
 
-## Modelagem de Dados
+## 📈 Evolução do Projeto por Fases
 
-Foi realizada a modelagem do banco de dados com base nas classes existentes no projeto. O Modelo Entidade-Relacionamento (MER) e o Diagrama de Entidade-Relacionamento (DER) foram criados para representar a estrutura do banco.
+### 🔹 Fase 1: Coleta e Estruturação Inicial de Dados
+**Módulo:** Lógica de Programação em Python
 
-### Diagrama MER
+**Objetivo:** Aplicar conceitos fundamentais de programação Python para processar dados de engajamento.
 
-![Diagrama MER](https://private-us-east-1.manuscdn.com/sessionFile/tdeVnIrxISuVbn5qvhTw0P/sandbox/rwCVZHZnQa0wtRZAvG4bSg-images_1756994975056_na1fn_L2hvbWUvdWJ1bnR1L21lcg.png?Policy=eyJTdGF0ZW1lbnQiOlt7IlJlc291cmNlIjoiaHR0cHM6Ly9wcml2YXRlLXVzLWVhc3QtMS5tYW51c2Nkbi5jb20vc2Vzc2lvbkZpbGUvdGRlVm5JcnhJU3VWYm41cXZoVHcwUC9zYW5kYm94L3J3Q1ZaSFpuUWEwd3RSWkF2RzRiU2ctaW1hZ2VzXzE3NTY5OTQ5NzUwNTZfbmExZm5fTDJodmJXVXZkV0oxYm5SMUwyMWxjZy5wbmciLCJDb25kaXRpb24iOnsiRGF0ZUxlc3NUaGFuIjp7IkFXUzpFcG9jaFRpbWUiOjE3OTg3NjE2MDB9fX1dfQ__&Key-Pair-Id=K2HSFNDJXOU9YS&Signature=nzm2zxU8qiBwNnK8OqH6rBJxln2j3Xnh4xCBs7cQnMfLCpyH3o2pNYTqasqHqoAuR4d8tyU7vHme8RS7TRaBvNDfSlCQM8i2GtNRMCXbt4hzAzzJNbAUx9IP-64xZddbwBWm3UN~LJiXibrBHvp9xuuGJcP-q9fKKi65vVfDyaldvIEZ103hIwDCj4o7ByqQyLKp~Qd0eI0mX5~HTTXUob066QNow27UbIRkFqbRGX32gcuRuh3ktM2Zsv1xZp04mtB3JIBiEkJPC~Uyha0tm7d7jY7nxmv~HOWh-g6HbhcO9SI~yqHCaUcUNhQbY9IMXSBXHF6WJUjNYgcClEHFVw__)
+**Principais Implementações:**
+- Leitura e processamento de arquivo CSV com dados de interações
+- Manipulação de strings, listas e dicionários
+- Estruturas de controle (condicionais e laços)
+- Funções para modularização do código
+- Limpeza e transformação de dados
+- Cálculo de métricas descritivas básicas
+- Tratamento de exceções
 
-## Estrutura do Banco de Dados
+**Métricas Calculadas:**
+- Total de interações por conteúdo
+- Contagem por tipo de interação
+- Tempo total e médio de visualização
+- Listagem de comentários por conteúdo
+- Top-5 conteúdos mais visualizados
 
-O script `schema.sql` contém os comandos DDL para criar o banco de dados `globo_tech` e as tabelas `Usuario`, `Conteudo`, `Plataforma` e `Interacao`.
+### 🔹 Fase 2: Análise com Orientação a Objetos
+**Módulo:** Programação Orientada a Objetos
 
-## Carga de Dados
+**Objetivo:** Refatorar o sistema aplicando princípios de POO para maior robustez e modularidade.
 
-O script `carga_dados.py` é responsável por ler o arquivo `interacoes_globo.csv`, se conectar ao banco de dados MySQL e popular as tabelas com os dados das interações.
+**Classes Implementadas:**
+- **Plataforma:** Representa plataformas de consumo (Globoplay, G1, etc.)
+- **Conteudo:** Classe base para conteúdos consumíveis
+  - **Video:** Herda de Conteudo, com cálculo de percentual assistido
+  - **Podcast:** Especialização para conteúdo de áudio
+  - **Artigo:** Especialização para conteúdo textual
+- **Interacao:** Representa interações usuário-conteúdo
+- **Usuario:** Gerencia dados e comportamentos dos usuários
+- **SistemaAnaliseEngajamento:** Orquestra todo o sistema
 
-## Consultas SQL
+**Conceitos Aplicados:**
+- Encapsulamento com properties
+- Herança e polimorfismo
+- Métodos mágicos (__str__, __repr__, __eq__)
+- Validação de dados nos construtores
+- Organização em módulos e pacotes
 
-O arquivo `queries.sql` contém as consultas SQL (DQL) para gerar os relatórios de análise de engajamento, como o ranking de conteúdos mais consumidos, a plataforma com maior engajamento e os conteúdos mais comentados.
+### 🔹 Fase 3: Estruturas de Dados e Algoritmos
+**Módulo:** Algoritmos e Estruturas de Dados
 
-## Como Executar
+**Objetivo:** Otimizar o processamento utilizando estruturas de dados eficientes e algoritmos de ordenação.
 
-1.  **Configurar o banco de dados:**
-    *   Crie um banco de dados MySQL chamado `globo_tech`.
-    *   Execute o script `schema.sql` para criar as tabelas.
+**Estruturas Implementadas:**
+- **Fila (Queue):** Processamento sequencial das linhas do CSV (FIFO)
+- **Árvore de Busca Binária:** Gerenciamento eficiente de conteúdos e usuários
+  - Operações: inserir, buscar, remover, percurso em ordem
+  - Complexidade: O(log n) em média para operações básicas
 
-2.  **Instalar dependências:**
-    ```bash
-    pip install mysql-connector-python
-    ```
+**Algoritmos de Ordenação:**
+- **Quick Sort:** Ordenação geral para listas grandes
+- **Insertion Sort:** Otimizado para listas pequenas
+- **Merge Sort:** Alternativa híbrida eficiente
 
-3.  **Executar a carga de dados:**
-    *   Certifique-se de que o arquivo `interacoes_globo.csv` está no mesmo diretório.
-    *   Execute o script `carga_dados.py`:
-    ```bash
-    python carga_dados.py
-    ```
+**Análise de Complexidade:**
+- Documentação de complexidade temporal e espacial
+- Notações Big-O, Big-Theta e Big-Ômega
+- Otimização baseada no tamanho dos dados
 
-4.  **Executar as consultas:**
-    *   Utilize as consultas do arquivo `queries.sql` em um cliente MySQL para obter os relatórios.
+### 🔹 Fase 4: Persistência com Banco de Dados Relacional
+**Módulo:** Banco de Dados
+
+**Objetivo:** Evoluir para um sistema persistente utilizando MySQL, aplicando conceitos de modelagem relacional.
+
+**Implementações da Fase 4:**
+- **Modelagem de Dados:** MER e DER completos
+- **Schema SQL:** Estrutura normalizada do banco de dados
+- **Carga de Dados:** Script Python para importação do CSV
+- **Consultas SQL:** Relatórios através de queries otimizadas
+
+## 🗄️ Estrutura do Banco de Dados (Fase 4)
+
+### Modelagem Relacional
+
+![Diagrama MER](https://private-us-east-1.manuscdn.com/sessionFile/tdeVnIrxISuVbn5qvhTw0P/sandbox/XrwquCeE2TF1NWj0q4k2Lj-images_1756996896982_na1fn_L2hvbWUvdWJ1bnR1L21lcg.png?Policy=eyJTdGF0ZW1lbnQiOlt7IlJlc291cmNlIjoiaHR0cHM6Ly9wcml2YXRlLXVzLWVhc3QtMS5tYW51c2Nkbi5jb20vc2Vzc2lvbkZpbGUvdGRlVm5JcnhJU3VWYm41cXZoVHcwUC9zYW5kYm94L1hyd3F1Q2VFMlRGMU5XajBxNGsyTGotaW1hZ2VzXzE3NTY5OTY4OTY5ODJfbmExZm5fTDJodmJXVXZkV0oxYm5SMUwyMWxjZy5wbmciLCJDb25kaXRpb24iOnsiRGF0ZUxlc3NUaGFuIjp7IkFXUzpFcG9jaFRpbWUiOjE3OTg3NjE2MDB9fX1dfQ__&Key-Pair-Id=K2HSFNDJXOU9YS&Signature=kYPl5lO2x-wZvRe6zdpbYdx02FdMa7iOVK4Y7e6tK0Wz8WOCrHzkP-g3HHjP7GiNzvhVqWVHYcD8FIVU7PoayAD0rJzYw04-K1HNjojRv~P10BmcsAyd2AR0ydvbhJYyAUsOp5~54V80OaLC0X1uAPyPAZ6nIHnspkzwtJ1unB8dipP9m-m0rUsEyTJ07TyFxf1Xv4xLX8lGdSV~aB23lTcqfmX6Ey4lsv5NjN1tU7Od1dbiZYvFkwUmzuOGqyoG4w3RzUMnMcgftzpeJPHDmwao1Xq3F1IdsvVP5E5awrNw~ILDYIDpQgOUgZ-QPS1nQk7p9IEnSSs0jMxLTWkDCw__)
+
+### Tabelas Principais:
+- **usuario:** Dados dos usuários
+- **conteudo:** Informações dos conteúdos
+- **plataforma:** Plataformas de consumo
+- **tipo_interacao:** Tipos de interação padronizados
+- **interacao:** Registro de todas as interações
+- **conteudo_plataforma:** Relação N:N entre conteúdos e plataformas
+
+---
+
+## 📊 Relatórios Gerados
+
+1. **Ranking de conteúdos mais consumidos** - Ordenados por tempo total de consumo
+2. **Usuários com maior tempo total de consumo** - Soma do tempo em todas as interações
+3. **Plataformas com maior engajamento** - Total de likes, shares e comments
+4. **Conteúdos mais comentados** - Ranking por número de comentários
+5. **Total de interações por tipo de conteúdo** - Agrupamento por categoria
+6. **Tempo médio de consumo por plataforma** - Análise de comportamento por plataforma
+7. **Quantidade de comentários por conteúdo** - Detalhamento de feedback dos usuários
+
+---
+
+## 📁 Estrutura do Projeto
+
+```
+analise-engajamento-globo/
+├── analise/                    # Sistema de análise (Fases 2-3)
+├── entidades/                  # Classes do domínio (Fases 2-3)
+├── estrutura_dados/           # Estruturas de dados (Fase 3)
+├── ordenacao/                 # Algoritmos de ordenação (Fase 3)
+├── schema.sql                 # Script DDL do banco (Fase 4)
+├── insercoes.sql             # Dados iniciais (Fase 4)
+├── carga_dados.py            # Script de carga (Fase 4)
+├── queries.sql               # Consultas de relatórios (Fase 4)
+├── mer.png                   # Diagrama MER (Fase 4)
+├── README.md                 # Documentação
+├── interacoes_globo.csv      # Dados de entrada
+└── main.py                   # Script principal
+```
+
+---
+
+## 🛠️ Tecnologias Utilizadas
+
+- **Python 3.x** - Linguagem principal
+- **MySQL** - Banco de dados relacional
+- **CSV** - Formato de dados de entrada
+- **PlantUML** - Diagramação do MER
+
+---
+
+## 📚 Conceitos Aplicados
+
+- **Lógica de Programação:** Estruturas de controle, funções, tratamento de exceções
+- **Programação Orientada a Objetos:** Classes, herança, polimorfismo, encapsulamento
+- **Estruturas de Dados:** Filas, árvores binárias de busca, análise de complexidade
+- **Algoritmos:** Ordenação (Quick Sort, Insertion Sort, Merge Sort)
+- **Banco de Dados:** Modelagem relacional, SQL (DDL, DML, DQL), normalização
+
+---
 
 
+<p align="center"> Desenvolvido durante o curso <strong>Academia Globotech</strong> da Ada em parceria com a Globo, com 💛 por <strong>@mayasrl e equipe</strong></p> 
