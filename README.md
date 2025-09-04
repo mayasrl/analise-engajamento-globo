@@ -1,140 +1,48 @@
+# Projeto Unificado - Fase 4: Persistência e Análise de Engajamento com Banco de Dados Relacional
 
-# 📊 Projeto Unificado - Fase 3: Análise de Engajamento de Mídias Globo com Estruturas de Dados
+## Objetivo
 
-## 👥 Integrantes
-- Pierre  
-- Maria  
-- Beatriz  
-- Nando  
+Nesta fase do projeto, o objetivo é evoluir o sistema de análise de engajamento para utilizar um banco de dados relacional (MySQL) para persistência dos dados. Isso torna a solução mais robusta, escalável e alinhada com as práticas de mercado.
 
-## 🎯 Objetivo
-Aplicar os princípios fundamentais de **Algoritmos e Estruturas de Dados** na análise de engajamento de conteúdos da Globo, utilizando **Fila**, **Árvore de Busca Binária** e algoritmos de **Ordenação** (Quick Sort, Insertion Sort, Merge Sort) para organizar e processar dados de forma eficiente.
+## Modelagem de Dados
 
----
+Foi realizada a modelagem do banco de dados com base nas classes existentes no projeto. O Modelo Entidade-Relacionamento (MER) e o Diagrama de Entidade-Relacionamento (DER) foram criados para representar a estrutura do banco.
 
-## 📁 Estrutura do Projeto
+### Diagrama MER
 
-```
-projeto_engajamento_fase_3/
-│
-├── main.py                         # Orquestrador principal
-├── interacoes_globo.csv           # Arquivo com interações brutas
-│
-├── entidades/                     # Entidades do domínio
-│   ├── conteudo.py                # Classes Conteudo, Video, Podcast, Artigo
-│   ├── interacao.py               # Classe Interacao
-│   ├── plataforma.py              # Classe Plataforma
-│   └── usuario.py                 # Classe Usuario
-│
-├── estruturas_dados/              # Estruturas de dados
-│   ├── fila.py                    # Implementação da Fila (FIFO)
-│   └── arvore_binaria_busca.py   # Implementação da Árvore de Busca Binária
-│
-├── analise/                       # Módulo de análise e relatórios
-│   └── sistema.py                 # SistemaAnaliseEngajamento: análise e ordenação
-│
-└── ordenacao/
-    └── ordenacao.py              # Algoritmos de ordenação: quick, merge e insertion
-```
+![Diagrama MER](https://private-us-east-1.manuscdn.com/sessionFile/tdeVnIrxISuVbn5qvhTw0P/sandbox/rwCVZHZnQa0wtRZAvG4bSg-images_1756994975056_na1fn_L2hvbWUvdWJ1bnR1L21lcg.png?Policy=eyJTdGF0ZW1lbnQiOlt7IlJlc291cmNlIjoiaHR0cHM6Ly9wcml2YXRlLXVzLWVhc3QtMS5tYW51c2Nkbi5jb20vc2Vzc2lvbkZpbGUvdGRlVm5JcnhJU3VWYm41cXZoVHcwUC9zYW5kYm94L3J3Q1ZaSFpuUWEwd3RSWkF2RzRiU2ctaW1hZ2VzXzE3NTY5OTQ5NzUwNTZfbmExZm5fTDJodmJXVXZkV0oxYm5SMUwyMWxjZy5wbmciLCJDb25kaXRpb24iOnsiRGF0ZUxlc3NUaGFuIjp7IkFXUzpFcG9jaFRpbWUiOjE3OTg3NjE2MDB9fX1dfQ__&Key-Pair-Id=K2HSFNDJXOU9YS&Signature=nzm2zxU8qiBwNnK8OqH6rBJxln2j3Xnh4xCBs7cQnMfLCpyH3o2pNYTqasqHqoAuR4d8tyU7vHme8RS7TRaBvNDfSlCQM8i2GtNRMCXbt4hzAzzJNbAUx9IP-64xZddbwBWm3UN~LJiXibrBHvp9xuuGJcP-q9fKKi65vVfDyaldvIEZ103hIwDCj4o7ByqQyLKp~Qd0eI0mX5~HTTXUob066QNow27UbIRkFqbRGX32gcuRuh3ktM2Zsv1xZp04mtB3JIBiEkJPC~Uyha0tm7d7jY7nxmv~HOWh-g6HbhcO9SI~yqHCaUcUNhQbY9IMXSBXHF6WJUjNYgcClEHFVw__)
 
----
+## Estrutura do Banco de Dados
 
-## 🧠 Estruturas Utilizadas
+O script `schema.sql` contém os comandos DDL para criar o banco de dados `globo_tech` e as tabelas `Usuario`, `Conteudo`, `Plataforma` e `Interacao`.
 
-### 🔁 Fila (Queue)
-Utilizada para leitura e processamento sequencial das linhas do CSV (First-In, First-Out).
+## Carga de Dados
 
-- **Operações**:
-  - `enfileirar(linha_csv)`
-  - `desenfileirar()`
-  - `esta_vazia()`
+O script `carga_dados.py` é responsável por ler o arquivo `interacoes_globo.csv`, se conectar ao banco de dados MySQL e popular as tabelas com os dados das interações.
 
-### 🌳 Árvores de Busca Binária (BST)
-Utilizadas para armazenar e recuperar eficientemente dados de `Conteudo` e `Usuario`.
+## Consultas SQL
 
-#### Árvore de Conteúdos
-- Chave: `_id_conteudo`
-- Operações:
-  - `inserir_conteudo(conteudo)`
-  - `buscar_conteudo(id)`
-  - `remover_conteudo(id)`
-  - `percurso_em_ordem()`
+O arquivo `queries.sql` contém as consultas SQL (DQL) para gerar os relatórios de análise de engajamento, como o ranking de conteúdos mais consumidos, a plataforma com maior engajamento e os conteúdos mais comentados.
 
-#### Árvore de Usuários
-- Chave: `_id_usuario`
-- Operações análogas à árvore de conteúdos.
+## Como Executar
 
----
+1.  **Configurar o banco de dados:**
+    *   Crie um banco de dados MySQL chamado `globo_tech`.
+    *   Execute o script `schema.sql` para criar as tabelas.
 
-## 🧮 Algoritmos de Ordenação
+2.  **Instalar dependências:**
+    ```bash
+    pip install mysql-connector-python
+    ```
 
-- **Quick Sort**: usado como padrão para listas grandes.
-- **Insertion Sort**: utilizado em listas pequenas (ex: resultados já quase ordenados).
-- **Merge Sort**: alternativa híbrida eficiente para casos intermediários.
+3.  **Executar a carga de dados:**
+    *   Certifique-se de que o arquivo `interacoes_globo.csv` está no mesmo diretório.
+    *   Execute o script `carga_dados.py`:
+    ```bash
+    python carga_dados.py
+    ```
 
-> Todos os algoritmos permitem ordenação por **métrica** (ex: `calcular_total_interacoes`) ou por **função chave** (`key_func`), além de suporte para ordenação reversa (descendente).
+4.  **Executar as consultas:**
+    *   Utilize as consultas do arquivo `queries.sql` em um cliente MySQL para obter os relatórios.
 
----
 
-## 📊 Relatórios Gerados
-
-### 1. **Ranking de Conteúdos Mais Consumidos**
-- Ordenados por tempo total de consumo (`watch_duration_seconds`).
-
-### 2. **Usuários com Maior Tempo Total de Consumo**
-- Soma do tempo de consumo em todas as interações.
-
-### 3. **Plataformas com Maior Engajamento**
-- Interações do tipo `view_start`, `like`, `share`, `comment` agrupadas por plataforma.
-
-### 4. **Conteúdos Mais Comentados**
-- Ranking de conteúdos com maior número de interações do tipo `comment`.
-
-### 5. **Total de Interações por Tipo de Conteúdo**
-- Agrupamento por conteúdo e total de interações recebidas.
-
-### 6. **Tempo Médio de Consumo por Plataforma**
-- Média dos tempos de consumo agrupados por plataforma.
-
-### 7. **Quantidade de Comentários por Conteúdo**
-- Lista com os conteúdos e quantidade de comentários registrados.
-
----
-
-## ⚙️ Execução
-
-1. Coloque o arquivo `interacoes_globo.csv` na raiz do projeto.
-2. Execute o projeto com:
-
-```bash
-python main.py
-```
-
-3. Acompanhe o processamento e geração de relatórios diretamente no terminal.
-
----
-
-## 📈 Complexidade dos Algoritmos
-
-Cada método implementado está documentado com suas análises de complexidade:
-
-- **Fila**:  
-  - Enfileirar/Desenfileirar → `O(1)`
-- **Árvore BST**:  
-  - Inserção/Busca/Remoção → `O(log n)` em média, `O(n)` no pior caso
-- **Quick Sort**:  
-  - Média → `O(n log n)`  
-  - Pior caso → `O(n²)`
-- **Insertion Sort**:  
-  - Melhor caso (quase ordenado) → `O(n)`  
-  - Pior caso → `O(n²)`
-- **Merge Sort**:  
-  - Sempre → `O(n log n)`
-
----
-
-## ✅ Conclusão
-
-O projeto integra os conceitos de estruturas de dados e algoritmos de ordenação aplicados à análise real de dados de engajamento. A escolha criteriosa das estruturas permitiu ganhos de performance no acesso, organização e visualização dos dados de forma eficiente e escalável.
-
----
