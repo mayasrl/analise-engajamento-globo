@@ -81,6 +81,8 @@ Este projeto visa desenvolver um sistema completo de análise de engajamento de 
 - **Carga de Dados:** Script Python para importação do CSV
 - **Consultas SQL:** Relatórios através de queries otimizadas
 
+---
+
 ## 🗄️ Estrutura do Banco de Dados (Fase 4)
 
 ### Modelagem Relacional
